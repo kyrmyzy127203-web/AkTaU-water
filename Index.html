@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AqTau Water - система мониторинга воды</title>
+
+<!-- LEAFLET -->
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f9fc;
+    color: #163447;
+}
+
+/* HEADER */
+
+header {
+    background: #087ea4;
+    color: white;
+    padding: 16px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+}
+
+.logo span {
+    font-weight: normal;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+nav button {
+    border: none;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    padding: 9px;
+    border-radius: 8px;
+}
+
+nav button:hover {
+    background: rgba(255,255,255,.15);
+}
+
+/* PAGES */
+
+.page {
+    display: none;
+    max-width: 1150px;
+    margin: auto;
+    padding: 35px 5%;
+}
+
+.page.active {
+    display: block;
+}
+
+/* HERO */
+
+.hero {
+    background: linear-gradient(135deg,#087ea4,#13afd0);
+    color: white;
+    padding: 45px 35px;
+    border-radius: 24px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    max-width: 750px;
+    line-height: 1.6;
+    font-size: 17px;
+}
+
+/* BUTTON */
+
+.btn {
+    border: none;
+    border-radius: 10px;
+    padding: 13px 18px;
+    background: #087ea4;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.btn:hover {
+    opacity: .85;
+}
+
+.white {
+    background: white;
+    color: #087ea4;
+}
+
+.red {
+    background: #c62828;
+}
+
+.green {
+    background: #18864b;
+}
+
+/* CARDS */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    padding: 23px;
+    border-radius: 17px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.06);
+}
+
+.stat {
+    font-size: 30px;
+    font-weight: bold;
+    color: #087ea4;
+}
+
+.card p {
+    margin-top: 7px;
+}
+
+/* FORM */
+
+.form {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.06);
+}
+
+label {
+    display: block;
+    margin: 18px 0 8px;
+    font-weight: bold;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #d4e2e8;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.upload {
+    border: 2px dashed #9bcbd8;
+    border-radius: 13px;
+    padding: 25px;
+    text-align: center;
+    background: #f8fcfd;
+    cursor: pointer;
+}
+
+.preview {
+    max-width: 250px;
+    max-height: 200px;
+    margin-top: 15px;
+    border-radius: 10px;
+}
+
+/* RESULT */
+
+.result {
+    display: none;
+    margin-top: 22px;
+    padding: 20px;
+    border-radius: 15px;
+    background: #eef8fb;
+}
+
+.result-item {
+    margin: 10px 0;
+}
+
+.big-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #087ea4;
+}
+
+.risk {
+    display: inline-block;
+    padding: 7px 13px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.risk-low {
+    background: #dff5e8;
+    color: #16733d;
+}
+
+.risk-medium {
+    background: #fff0cf;
+    color: #996500;
+}
+
+.risk-high {
+    background: #ffe0e0;
+    color: #a71919;
+}
+
+/* MAP */
+
+#map {
+    height: 550px;
+    width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #c8dfe6;
+}
+
+.map-info {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+}
+
+/* DASHBOARD */
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dashboard-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+}
+
+.dashboard-card strong {
+    display: block;
+    font-size: 27px;
+    color: #087ea4;
+    margin-top: 7px;
+}
+
+/* TABLE */
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid #e4edf0;
+    text-align: left;
+}
+
+th {
+    background: #e9f5f8;
+}
+
+.success {
+    color: #18864b;
+    font-weight: bold;
+}
+
+.photo-small {
+    width: 90px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+/* CALCULATOR */
+
+.calculator {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.06);
+}
+
+.calc-result {
+    margin-top: 20px;
+    padding: 20px;
+    background: #eef8fb;
+    border-radius: 14px;
+}
+
+/* NOTICE */
+
+.notice {
+    background: #fff7dc;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 15px 0;
+    line-height: 1.5;
+}
+
+/* FOOTER */
+
+footer {
+    margin-top: 40px;
+    padding: 30px;
+    background: #073f55;
+    color: white;
+    text-align: center;
+}
+
+/* MOBILE */
+
+@media(max-width:750px) {
+
+    header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    nav {
+        justify-content: center;
+    }
+
+    .hero h1 {
+        font-size: 30px;
+    }
+
+    .cards,
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .page {
+        padding: 25px 4%;
+    }
+
+    #map {
+        height: 430px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- HEADER -->
+
+<header>
+
+<div class="logo">
+💧 AqTau <span>Water</span>
+</div>
+
+<nav>
+
+<button onclick="showPage('home')">
+Главная
+</button>
+
+<button onclick="showPage('report')">
+Сообщить
+</button>
+
+<button onclick="showPage('mapPage')">
+Карта
+</button>
+
+<button onclick="showPage('calculator')">
+Расчёт
+</button>
+
+<button onclick="showPage('admin')">
+Мониторинг
+</button>
+
+</nav>
+
+</header>
+
+
+<!-- HOME -->
+
+<section id="home" class="page active">
+
+<div class="hero">
+
+<h1>
+AqTau Water
+</h1>
+
+<p>
+Система мониторинга потерь воды в Актау.
+Сайт собирает сообщения жителей, координаты,
+фотографии и показания водопроводной сети,
+а затем рассчитывает фактические потери воды
+и уровень риска.
+</p>
+
+<br>
+
+<button
+class="btn white"
+onclick="showPage('report')"
+>
+💧 Сообщить о проблеме
+</button>
+
+</div>
+
+
+<div class="cards">
+
+<div class="card">
+
+<div class="stat" id="homeReports">
+0
+</div>
+
+<p>
+Получено сообщений
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="stat" id="homeHighRisk">
+0
+</div>
+
+<p>
+Высокий риск
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="stat" id="homeLoss">
+0
+</div>
+
+<p>
+Общие потери, м³/ч
+</p>
+
+</div>
+
+</div>
+
+
+<br>
+
+
+<div class="card">
+
+<h2>
+Как работает система
+</h2>
+
+<br>
+
+<p>
+<b>1.</b> Житель или специалист сообщает о проблеме.
+</p>
+
+<br>
+
+<p>
+<b>2.</b> Система получает координаты и данные.
+</p>
+
+<br>
+
+<p>
+<b>3.</b> Рассчитывается фактическая потеря воды.
+</p>
+
+<br>
+
+<p>
+<b>4.</b> Система определяет уровень риска.
+</p>
+
+<br>
+
+<p>
+<b>5.</b> Проблемный участок отображается на карте.
+</p>
+
+</div>
+
+<br>
+
+
+<div class="notice">
+
+<b>Важно:</b>
+система не придумывает данные о существующих утечках.
+Она показывает только зарегистрированные сообщения
+и расчёты на основе введённых показаний.
+
+</div>
+
+</section>
+
+
+
+<!-- REPORT -->
+
+<section id="report" class="page">
+
+<h1>
+Сообщить о проблеме
+</h1>
+
+<br>
+
+
+<div class="form">
+
+
+<label>
+📷 Фотография
+</label>
+
+<div
+class="upload"
+onclick="document.getElementById('photo').click()"
+>
+
+<span id="uploadText">
+Нажмите, чтобы выбрать фотографию
+</span>
+
+<input
+id="photo"
+type="file"
+accept="image/*"
+hidden
+onchange="previewPhoto(event)"
+>
+
+<div id="previewContainer"></div>
+
+</div>
+
+
+<label>
+📍 Адрес / место
+</label>
+
+<input
+id="address"
+placeholder="Например: 14 мкр., возле дома 25"
+>
+
+
+<br>
+
+<button
+class="btn"
+onclick="getLocation()"
+>
+📍 Определить моё местоположение
+</button>
+
+
+<div
+id="locationStatus"
+style="margin-top:10px;color:#087ea4;"
+>
+Координаты ещё не определены
+</div>
+
+
+<input
+id="latitude"
+type="hidden"
+>
+
+<input
+id="longitude"
+type="hidden"
+>
+
+
+<label>
+Что произошло?
+</label>
+
+<textarea
+id="description"
+rows="4"
+placeholder="Например: вода выходит из-под земли..."
+></textarea>
+
+
+<label>
+Предполагаемая срочность
+</label>
+
+<select id="urgency">
+
+<option>Не знаю</option>
+<option>Низкая</option>
+<option>Средняя</option>
+<option>Высокая</option>
+
+</select>
+
+
+<br><br>
+
+
+<button
+class="btn"
+onclick="analyzeReport()"
+>
+🔎 Проанализировать
+</button>
+
+
+<div
+id="reportResult"
+class="result"
+>
+
+<h3>
+Результат анализа
+</h3>
+
+<div class="result-item">
+
+<b>
+Оценка риска:
+</b>
+
+<span id="reportRisk">
+-
+</span>
+
+</div>
+
+
+<div class="result-item">
+
+<b>
+Основание:
+</b>
+
+<span id="reportReason">
+-
+</span>
+
+</div>
+
+
+<div class="result-item">
+
+<b>
+Координаты:
+</b>
+
+<span id="reportCoordinates">
+-
+</span>
+
+</div>
+
+
+<br>
+
+
+<button
+class="btn"
+onclick="sendReport()"
+>
+📨 Сохранить сообщение
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- MAP -->
+
+<section id="mapPage" class="page">
+
+<h1>
+Реальная карта сообщений
+</h1>
+
+<br>
+
+<div class="map-info">
+
+🔴 Высокий риск
+&nbsp;&nbsp;
+🟠 Средний риск
+&nbsp;&nbsp;
+🟢 Низкий риск
+
+<br><br>
+
+На карте отображаются только сообщения,
+сохранённые в системе.
+
+</div>
+
+
+<div id="map"></div>
+
+</section>
+
+
+
+<!-- CALCULATOR -->
+
+<section id="calculator" class="page">
+
+<h1>
+Расчёт потерь воды
+</h1>
+
+<br>
+
+<div class="notice">
+
+Здесь используется математический расчёт.
+Процент не задаётся вручную.
+
+</div>
+
+
+<div class="calculator">
+
+
+<label>
+💧 Расход воды на входе, м³/ч
+</label>
+
+<input
+id="inputFlow"
+type="number"
+min="0"
+step="0.01"
+placeholder="Например: 1000"
+>
+
+
+<label>
+💧 Расход воды на выходе, м³/ч
+</label>
+
+<input
+id="outputFlow"
+type="number"
+min="0"
+step="0.01"
+placeholder="Например: 920"
+>
+
+
+<label>
+📈 Давление до участка, bar
+</label>
+
+<input
+id="pressureBefore"
+type="number"
+min="0"
+step="0.01"
+placeholder="Например: 5.2"
+>
+
+
+<label>
+📉 Давление после участка, bar
+</label>
+
+<input
+id="pressureAfter"
+type="number"
+min="0"
+step="0.01"
+placeholder="Например: 4.4"
+>
+
+
+<br><br>
+
+
+<button
+class="btn"
+onclick="calculateWaterLoss()"
+>
+Рассчитать
+</button>
+
+
+<div
+id="calculationResult"
+class="calc-result"
+style="display:none"
+>
+
+<h3>
+Результат
+</h3>
+
+<br>
+
+<p>
+Потеря воды:
+<strong id="lossVolume">
+-
+</strong>
+м³/ч
+</p>
+
+<br>
+
+<p>
+Процент потери:
+<strong id="lossPercent">
+-
+</strong>
+%
+</p>
+
+<br>
+
+<p>
+Падение давления:
+<strong id="pressureDrop">
+-
+</strong>
+bar
+</p>
+
+<br>
+
+<p>
+Уровень риска:
+<strong id="calculationRisk">
+-
+</strong>
+</p>
+
+<br>
+
+<p id="calculationExplanation">
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- ADMIN -->
+
+<section id="admin" class="page">
+
+<h1>
+Панель мониторинга
+</h1>
+
+<br>
+
+
+<div class="dashboard">
+
+<div class="dashboard-card">
+
+Сообщений
+
+<strong id="dashReports">
+0
+</strong>
+
+</div>
+
+
+<div class="dashboard-card">
+
+Высокий риск
+
+<strong id="dashHigh">
+0
+</strong>
+
+</div>
+
+
+<div class="dashboard-card">
+
+Средний риск
+
+<strong id="dashMedium">
+0
+</strong>
+
+</div>
+
+
+<div class="dashboard-card">
+
+Потери
+
+<strong id="dashLoss">
+0 м³/ч
+</strong>
+
+</div>
+
+</div>
+
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>№</th>
+<th>Место</th>
+<th>Риск</th>
+<th>Координаты</th>
+<th>Фото</th>
+<th>Статус</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="reports">
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+
+<footer>
+
+💧 AqTau Water
+
+<br><br>
+
+Система мониторинга и раннего обнаружения потерь воды
+
+</footer>
+
+
+
+<!-- LEAFLET -->
+
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+
+<!-- FIREBASE -->
+
+<script type="module">
+
+
+import {
+initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+
+import {
+getDatabase,
+ref,
+push,
+onValue
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+
+/* FIREBASE */
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyDty1_Zwxk-3oogyKoicyhG1nHSOHDGF0",
+
+authDomain:
+"aqtau-water.firebaseapp.com",
+
+databaseURL:
+"https://aqtau-water-default-rtdb.firebaseio.com",
+
+projectId:
+"aqtau-water",
+
+storageBucket:
+"aqtau-water.firebasestorage.app",
+
+messagingSenderId:
+"529911210293",
+
+appId:
+"1:529911210293:web:15e86463a0fe94a2ac2c7c",
+
+measurementId:
+"G-Y37FQJJJ99"
+
+};
+
+
+const app =
+initializeApp(firebaseConfig);
+
+
+const database =
+getDatabase(app);
+
+
+
+/* MAP */
+
+const map =
+L.map("map").setView(
+[43.65, 51.15],
+12
+);
+
+
+L.tileLayer(
+"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+{
+maxZoom:19,
+attribution:"© OpenStreetMap"
+}
+).addTo(map);
+
+
+const markersLayer =
+L.layerGroup().addTo(map);
+
+
+
+/* PAGE SWITCH */
+
+window.showPage =
+function(pageId) {
+
+document
+.querySelectorAll(".page")
+.forEach(page => {
+
+page.classList.remove("active");
+
+});
+
+
+document
+.getElementById(pageId)
+.classList.add("active");
+
+
+if(pageId === "mapPage") {
+
+setTimeout(() => {
+
+map.invalidateSize();
+
+},200);
+
+}
+
+
+window.scrollTo(0,0);
+
+};
+
+
+
+/* PHOTO PREVIEW */
+
+window.previewPhoto =
+function(event) {
+
+const file =
+event.target.files[0];
+
+if(!file) return;
+
+
+const reader =
+new FileReader();
+
+
+reader.onload =
+function(e) {
+
+document
+.getElementById("uploadText")
+.innerText =
+"✅ Фотография выбрана";
+
+
+document
+.getElementById("previewContainer")
+.innerHTML =
+
+`<img
+src="${e.target.result}"
+class="preview"
+>`;
+
+};
+
+
+reader.readAsDataURL(file);
+
+};
+
+
+
+/* GPS */
+
+window.getLocation =
+function() {
+
+const status =
+document.getElementById("locationStatus");
+
+
+if(!navigator.geolocation) {
+
+status.innerText =
+"❌ GPS не поддерживается";
+
+return;
+
+}
+
+
+status.innerText =
+"Определяем местоположение...";
+
+
+navigator.geolocation.getCurrentPosition(
+
+function(position) {
+
+const lat =
+position.coords.latitude;
+
+const lon =
+position.coords.longitude;
+
+
+document
+.getElementById("latitude")
+.value =
+lat;
+
+
+document
+.getElementById("longitude")
+.value =
+lon;
+
+
+status.innerText =
+"✅ Координаты получены: "
++
+lat.toFixed(6)
++
+", "
++
+lon.toFixed(6);
+
+},
+
+function(error) {
+
+status.innerText =
+"❌ Не удалось получить координаты. Разрешите доступ к геолокации.";
+
+},
+
+{
+enableHighAccuracy:true,
+timeout:10000,
+maximumAge:0
+}
+
+);
+
+};
+
+
+
+/* COMPRESS PHOTO */
+
+function compressImage(file) {
+
+return new Promise((resolve,reject) => {
+
+const reader =
+new FileReader();
+
+
+reader.onload =
+function(event) {
+
+const img =
+new Image();
+
+
+img.onload =
+function() {
+
+const canvas =
+document.createElement("canvas");
+
+
+const maxSize =
+900;
+
+
+let width =
+img.width;
+
+let height =
+img.height;
+
+
+if(width > height && width > maxSize) {
+
+height =
+height * maxSize / width;
+
+width =
+maxSize;
+
+}
+
+else if(height > maxSize) {
+
+width =
+width * maxSize / height;
+
+height =
+maxSize;
+
+}
+
+
+canvas.width =
+width;
+
+canvas.height =
+height;
+
+
+const ctx =
+canvas.getContext("2d");
+
+
+ctx.drawImage(
+img,
+0,
+0,
+width,
+height
+);
+
+
+resolve(
+canvas.toDataURL(
+"image/jpeg",
+0.65
+)
+);
+
+};
+
+
+img.onerror =
+reject;
+
+img.src =
+event.target.result;
+
+};
+
+
+reader.onerror =
+reject;
+
+reader.readAsDataURL(file);
+
+});
+
+}
+
+
+
+/* REPORT ANALYSIS */
+
+window.analyzeReport =
+function() {
+
+const description =
+document
+.getElementById("description")
+.value
+.toLowerCase();
+
+
+const urgency =
+document
+.getElementById("urgency")
+.value;
+
+
+let score = 0;
+
+let reasons = [];
+
+
+/* TEXT SIGNALS */
+
+if(
+description.includes("луж")
+||
+description.includes("вода")
+||
+description.includes("теч")
+) {
+
+score += 25;
+
+reasons.push(
+"обнаружены признаки воды"
+);
+
+}
+
+
+if(
+description.includes("силь")
+||
+description.includes("много")
+||
+description.includes("стру")
+) {
+
+score += 20;
+
+reasons.push(
+"описано сильное течение"
+);
+
+}
+
+
+if(
+description.includes("шум")
+||
+description.includes("свист")
+) {
+
+score += 15;
+
+reasons.push(
+"указан необычный шум"
+);
+
+}
+
+
+/* PHOTO */
+
+const photo =
+document.getElementById("photo");
+
+if(photo.files.length > 0) {
+
+score += 15;
+
+reasons.push(
+"добавлена фотография"
+);
+
+}
+
+
+/* USER URGENCY */
+
+if(urgency === "Высокая") {
+
+score += 20;
+
+}
+
+else if(urgency === "Средняя") {
+
+score += 10;
+
+}
+
+
+/* LIMIT */
+
+if(score > 100) {
+
+score = 100;
+
+}
+
+
+/* RISK */
+
+let risk;
+
+
+if(score >= 70) {
+
+risk =
+"🔴 Высокий";
+
+}
+
+else if(score >= 40) {
+
+risk =
+"🟠 Средний";
+
+}
+
+else {
+
+risk =
+"🟢 Низкий";
+
+}
+
+
+if(reasons.length === 0) {
+
+reasons.push(
+"недостаточно признаков для высокой оценки"
+);
+
+}
+
+
+document
+.getElementById("reportRisk")
+.innerText =
+risk
++
+" (оценка признаков: "
++
+score
++
+"%)";
+
+
+document
+.getElementById("reportReason")
+.innerText =
+reasons.join(", ");
+
+
+const lat =
+document.getElementById("latitude").value;
+
+const lon =
+document.getElementById("longitude").value;
+
+
+document
+.getElementById("reportCoordinates")
+.innerText =
+lat && lon
+?
+lat + ", " + lon
+:
+"не определены";
+
+
+document
+.getElementById("reportResult")
+.style.display =
+"block";
+
+};
+
+
+
+/* SEND REPORT */
+
+window.sendReport =
+async function() {
+
+
+const address =
+document
+.getElementById("address")
+.value
+.trim();
+
+
+const description =
+document
+.getElementById("description")
+.value
+.trim();
+
+
+const urgency =
+document
+.getElementById("urgency")
+.value;
+
+
+const latitude =
+document
+.getElementById("latitude")
+.value;
+
+
+const longitude =
+document
+.getElementById("longitude")
+.value;
+
+
+if(!address) {
+
+alert(
+"Введите адрес или место."
+);
+
+return;
+
+}
+
+
+if(!latitude || !longitude) {
+
+alert(
+"Сначала определите местоположение."
+);
+
+return;
+
+}
+
+
+const risk =
+document
+.getElementById("reportRisk")
+.innerText;
+
+
+const photoInput =
+document
+.getElementById("photo");
+
+
+let photo = "";
+
+
+if(photoInput.files.length > 0) {
+
+photo =
+await compressImage(
+photoInput.files[0]
+);
+
+}
+
+
+const report = {
+
+address:
+address,
+
+description:
+description ||
+"Описание отсутствует",
+
+urgency:
+urgency,
+
+risk:
+risk,
+
+latitude:
+Number(latitude),
+
+longitude:
+Number(longitude),
+
+photo:
+photo,
+
+status:
+"Новая",
+
+createdAt:
+new Date().toISOString()
+
+};
+
+
+try {
+
+
+await push(
+ref(database,"reports"),
+report
+);
+
+
+alert(
+"✅ Сообщение сохранено."
+);
+
+
+/* RESET */
+
+document
+.getElementById("address")
+.value = "";
+
+
+document
+.getElementById("description")
+.value = "";
+
+
+document
+.getElementById("urgency")
+.value =
+"Не знаю";
+
+
+document
+.getElementById("photo")
+.value = "";
+
+
+document
+.getElementById("latitude")
+.value = "";
+
+
+document
+.getElementById("longitude")
+.value = "";
+
+
+document
+.getElementById("previewContainer")
+.innerHTML = "";
+
+
+document
+.getElementById("uploadText")
+.innerText =
+"Нажмите, чтобы выбрать фотографию";
+
+
+document
+.getElementById("locationStatus")
+.innerText =
+"Координаты ещё не определены";
+
+
+document
+.getElementById("reportResult")
+.style.display =
+"none";
+
+
+showPage("mapPage");
+
+
+}
+
+catch(error) {
+
+console.error(error);
+
+alert(
+"❌ Ошибка сохранения."
+);
+
+}
+
+};
+
+
+
+/* REAL WATER LOSS CALCULATION */
+
+window.calculateWaterLoss =
+function() {
+
+
+const input =
+Number(
+document.getElementById("inputFlow").value
+);
+
+
+const output =
+Number(
+document.getElementById("outputFlow").value
+);
+
+
+const pressureBefore =
+Number(
+document.getElementById("pressureBefore").value
+);
+
+
+const pressureAfter =
+Number(
+document.getElementById("pressureAfter").value
+);
+
+
+if(
+input <= 0 ||
+output < 0
+) {
+
+alert(
+"Введите корректные расходы воды."
+);
+
+return;
+
+}
+
+
+if(output > input) {
+
+alert(
+"Расход на выходе не может быть больше расхода на входе."
+);
+
+return;
+
+}
+
+
+const loss =
+input - output;
+
+
+const percent =
+(input > 0)
+?
+(loss / input) * 100
+:
+0;
+
+
+const pressureDrop =
+Math.max(
+0,
+pressureBefore - pressureAfter
+);
+
+
+let risk;
+
+let explanation;
+
+
+if(percent >= 10 || pressureDrop >= 1) {
+
+risk =
+"🔴 ВЫСОКИЙ";
+
+explanation =
+"Потери воды или падение давления требуют срочной проверки участка.";
+
+}
+
+else if(percent >= 5 || pressureDrop >= 0.5) {
+
+risk =
+"🟠 СРЕДНИЙ";
+
+explanation =
+"Обнаружены заметные отклонения. Участок рекомендуется проверить.";
+
+}
+
+else {
+
+risk =
+"🟢 НИЗКИЙ";
+
+explanation =
+"По введённым данным значительных отклонений не обнаружено.";
+
+}
+
+
+document
+.getElementById("lossVolume")
+.innerText =
+loss.toFixed(2);
+
+
+document
+.getElementById("lossPercent")
+.innerText =
+percent.toFixed(2);
+
+
+document
+.getElementById("pressureDrop")
+.innerText =
+pressureDrop.toFixed(2);
+
+
+document
+.getElementById("calculationRisk")
+.innerText =
+risk;
+
+
+document
+.getElementById("calculationExplanation")
+.innerText =
+explanation;
+
+
+document
+.getElementById("calculationResult")
+.style.display =
+"block";
+
+};
+
+
+
+/* LOAD REPORTS */
+
+const reportsRef =
+ref(database,"reports");
+
+
+onValue(
+reportsRef,
+(snapshot) => {
+
+
+const table =
+document.getElementById("reports");
+
+
+table.innerHTML = "";
+
+
+markersLayer.clearLayers();
+
+
+let total = 0;
+
+let high = 0;
+
+let medium = 0;
+
+let totalLoss = 0;
+
+
+if(!snapshot.exists()) {
+
+table.innerHTML = `
+
+<tr>
+
+<td colspan="6">
+
+Пока нет зарегистрированных сообщений.
+
+</td>
+
+</tr>
+
+`;
+
+updateDashboard(
+0,
+0,
+0,
+0
+);
+
+return;
+
+}
+
+
+const reports =
+snapshot.val();
+
+
+Object.entries(reports)
+.reverse()
+.forEach(
+([id,report],index) => {
+
+
+total++;
+
+
+/* RISK */
+
+const riskText =
+report.risk || "";
+
+
+if(
+riskText.includes("Высокий")
+) {
+
+high++;
+
+}
+
+
+if(
+riskText.includes("Средний")
+) {
+
+medium++;
+
+}
+
+
+/* MAP */
+
+if(
+typeof report.latitude === "number"
+&&
+typeof report.longitude === "number"
+) {
+
+
+let markerColor =
+"green";
+
+
+if(
+riskText.includes("Высокий")
+) {
+
+markerColor =
+"red";
+
+}
+
+else if(
+riskText.includes("Средний")
+) {
+
+markerColor =
+"orange";
+
+}
+
+
+const marker =
+L.circleMarker(
+[
+report.latitude,
+report.longitude
+],
+{
+radius:9,
+color:markerColor,
+fillColor:markerColor,
+fillOpacity:.8
+}
+);
+
+
+let popup = `
+
+<b>💧 AqTau Water</b>
+<br><br>
+
+<b>📍 Адрес:</b><br>
+${escapeHtml(report.address)}
+
+<br><br>
+
+<b>⚠️ Риск:</b><br>
+${escapeHtml(report.risk || "Не рассчитан")}
+
+<br><br>
+
+<b>Описание:</b><br>
+${escapeHtml(report.description)}
+
+`;
+
+
+if(report.photo) {
+
+popup += `
+
+<br><br>
+
+<img
+src="${report.photo}"
+style="
+width:220px;
+max-height:160px;
+object-fit:cover;
+border-radius:8px;
+"
+>
+
+`;
+
+}
+
+
+marker
+.bindPopup(popup)
+.addTo(markersLayer);
+
+}
+
+
+/* TABLE */
+
+const row =
+document.createElement("tr");
+
+
+row.innerHTML = `
+
+<td>
+#${String(index + 1).padStart(3,"0")}
+</td>
+
+<td>
+${escapeHtml(report.address)}
+</td>
+
+<td>
+${escapeHtml(report.risk || "-")}
+</td>
+
+<td>
+${report.latitude && report.longitude
+?
+Number(report.latitude).toFixed(5)
++
+", "
++
+Number(report.longitude).toFixed(5)
+:
+"-"}
+</td>
+
+<td>
+
+${
+report.photo
+
+?
+
+`<img
+src="${report.photo}"
+class="photo-small"
+onclick="window.open('${report.photo}')"
+>`
+
+:
+
+"Нет фото"
+
+}
+
+</td>
+
+<td class="success">
+
+${escapeHtml(report.status || "Новая")}
+
+</td>
+
+`;
+
+
+table.appendChild(row);
+
+});
+
+
+updateDashboard(
+total,
+high,
+medium,
+totalLoss
+);
+
+}
+);
+
+
+
+/* DASHBOARD */
+
+function updateDashboard(
+total,
+high,
+medium,
+loss
+) {
+
+
+document
+.getElementById("homeReports")
+.innerText =
+total;
+
+
+document
+.getElementById("homeHighRisk")
+.innerText =
+high;
+
+
+document
+.getElementById("homeLoss")
+.innerText =
+loss.toFixed(2);
+
+
+document
+.getElementById("dashReports")
+.innerText =
+total;
+
+
+document
+.getElementById("dashHigh")
+.innerText =
+high;
+
+
+document
+.getElementById("dashMedium")
+.innerText =
+medium;
+
+
+document
+.getElementById("dashLoss")
+.innerText =
+loss.toFixed(2)
++
+" м³/ч";
+
+}
+
+
+
+/* ESCAPE HTML */
+
+function escapeHtml(text) {
+
+const div =
+document.createElement("div");
+
+div.textContent =
+text ?? "";
+
+return div.innerHTML;
+
+}
+
+
+</script>
+
+</body>
+</html>
