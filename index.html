@@ -1943,6 +1943,7 @@ table.innerHTML = "";
 
 
 markersLayer.clearLayers();
+    let mapPoints = [];
 
 
 let total = 0;
@@ -2025,7 +2026,10 @@ if(
 typeof report.latitude === "number"
 &&
 typeof report.longitude === "number"
-) {
+) { mapPoints.push([
+    report.latitude,
+    report.longitude
+]);
 
 
 let markerColor =
@@ -2181,7 +2185,11 @@ table.appendChild(row);
 
 });
 
-
+if (mapPoints.length > 0) {
+    map.fitBounds(mapPoints, {
+        padding: [40, 40]
+    });
+}
 updateDashboard(
 total,
 high,
